@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Taschenlampe</title>
+<link rel="manifest" href="flashlight-manifest.json">
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+  #stage {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    transition: background-color 0.1s ease;
+  }
+  #hud {
+    font-family: -apple-system, Roboto, Arial, sans-serif;
+    font-size: 14px;
+    padding-bottom: 18px;
+    pointer-events: none;
+    mix-blend-mode: difference;
+    color: #fff;
+  }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <div id="hud">Stufe 5 / 5</div>
+</div>
+
+<script>
+  const stage = document.getElementById('stage');
+  const hud = document.getElementById('hud');
+
+  // Hellste Stufe: EBE2D3, dunkelste Stufe: B69D72 - dazwischen interpoliert
+  const brightColor = { r: 0xEB, g: 0xE2, b: 0xD3 };
+  const darkColor   = { r: 0xB6, g: 0x9D, b: 0x72 };
+  const levels = 5;
+  let currentLevel = levels; // startet auf hellster Stufe
+
+  function render() {
+    const t = (currentLevel - 1) / (levels - 1); // 1 = hell, 0 = dunkel
+    const r = Math.round(darkColor.r + (brightColor.r - darkColor.r) * t);
+    const g = Math.round(darkColor.g + (brightColor.g - darkColor.g) * t);
+    const b = Math.round(darkColor.b + (brightColor.b - darkColor.b) * t);
+    stage.style.backgroundColor = `rgb(${r},${g},${b})`;
+    hud.textContent = `Stufe ${currentLevel} / ${levels}`;
+  }
+
+  function cycle() {
+    currentLevel = currentLevel - 1;
+    if (currentLevel < 1) currentLevel = levels;
+    render();
+  }
+
+  stage.addEventListener('click', cycle);
+
+  // Vollbild erzwingen (funktioniert am besten in installierter PWA/APK)
+  document.addEventListener('click', () => {
+    if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(()=>{});
+    }
+  }, { once: true });
+
+  // Bildschirm wach halten, falls unterstützt
+  if ('wakeLock' in navigator) {
+    navigator.wakeLock.request('screen').catch(()=>{});
+  }
+
+  render();
+</script>
+</body>
+</html>
